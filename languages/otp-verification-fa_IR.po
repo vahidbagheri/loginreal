@@ -1,0 +1,72 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: \n"
+"PO-Revision-Date: \n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: fa_IR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 3.0.1\n"
+
+msgid "Enter the code sent to:"
+msgstr "کد ارسال‌شده به شماره زیر را وارد کنید:"
+
+msgid "Successfully logged in!"
+msgstr "با موفقیت وارد شدید!"
+
+msgid "Resend Code"
+msgstr "ارسال مجدد کد"
+
+msgid "Verify & Login"
+msgstr "تأیید و ورود"
+
+msgid "Error saving verification code."
+msgstr "خطا در ذخیره‌سازی کد."
+
+msgid "Error creating user account."
+msgstr "خطا در ایجاد حساب کاربری."
+
+msgid "Login / Sign up"
+msgstr "ورود / ثبت نام"
+
+msgid "Login or Sign up"
+msgstr "وارد شوید یا ثبت نام کنید"
+
+msgid "Enter your mobile number:"
+msgstr "شماره موبایل خود را وارد کنید:"
+
+msgid "Send verification code"
+msgstr "ارسال کد تایید"
+
+msgid "Enter the code sent to"
+msgstr "کد ارسال شده را وارد کنید"
+
+msgid "Confirm & Login"
+msgstr "تایید و ورود"
+
+msgid "Didn’t receive the code?"
+msgstr "کد را دریافت نکردید؟"
+
+msgid "Resend"
+msgstr "ارسال مجدد"
+
+msgid "seconds"
+msgstr "ثانیه"
+
+msgid "Verification code sent!"
+msgstr "کد تایید ارسال شد!"
+
+msgid "Error saving code."
+msgstr "خطا در ذخیره کد."
+
+msgid "Invalid or expired code."
+msgstr "کد نامعتبر یا منقضی شده است."
+
+msgid "Login successful!"
+msgstr "ورود با موفقیت"
+
+msgid "e.g. 09123456789"
+msgstr "مثلاً 09123456789"

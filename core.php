@@ -6,6 +6,8 @@ Description: A simple OTP verification system with modal and AJAX for WordPress,
 Version: 1.2
 Author: vahid bagheri
 Author URI: https://example.com
+Text Domain: otp-verification
+Domain Path: /languages
 License: GPL2
 */
 
@@ -24,7 +26,16 @@ if (!in_array('woocommerce/woocommerce.php', apply_filters('active_plugins', get
 define('OTP_VERIFICATION_VERSION', '1.2');
 define('OTP_VERIFICATION_PATH', plugin_dir_path(__FILE__));
 define('OTP_VERIFICATION_URL', plugin_dir_url(__FILE__));
+define('OTPWC_TD', 'otp-verification');
 
+
+add_action('init', function () {
+    load_plugin_textdomain(
+        OTPWC_TD,
+        false,
+        dirname(plugin_basename(__FILE__)) . '/languages/'
+    );
+},1);
 
 function otp_verification_install() {
     global $wpdb;
@@ -56,70 +67,107 @@ register_uninstall_hook(__FILE__, 'otp_verification_uninstall');
 
 
 function otp_verification_enqueue_assets() {
-   
-    wp_enqueue_style('bootstrap-css', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css');
-    wp_enqueue_script('bootstrap-js', 'https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js', array('jquery'), null, true);
-
-
+    wp_enqueue_style('bootstrap-css','https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css');
+    wp_enqueue_script('bootstrap-js','https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js',['jquery'],null,true);
     wp_enqueue_script('jquery');
 
+    wp_enqueue_script('otp-verification-js', OTP_VERIFICATION_URL.'assets/js/otp-verification.js', ['jquery'], OTP_VERIFICATION_VERSION, true);
 
-    wp_enqueue_script('otp-verification-js', OTP_VERIFICATION_URL . 'assets/js/otp-verification.js', array('jquery'), OTP_VERIFICATION_VERSION, true);
+    
+    $i18n = [
+        'openButton'      => __('Login / Sign up', OTPWC_TD),
+        'title'           => __('Login or Sign up', OTPWC_TD),
+        'enterPhone'      => __('Enter your mobile number:', OTPWC_TD),
+        'sendCode'        => __('Send verification code', OTPWC_TD),
+        'enterCodeFor'    => __('Enter the code sent to', OTPWC_TD),
+        'confirmLogin'    => __('Confirm & Login', OTPWC_TD),
+        'notReceived'     => __('Didn’t receive the code?', OTPWC_TD),
+        'resend'          => __('Resend', OTPWC_TD),
+        'seconds'         => __('seconds', OTPWC_TD),
+        'codeSent'        => __('Verification code sent!', OTPWC_TD),
+        'saveError'       => __('Error saving code.', OTPWC_TD),
+        'invalidCode'     => __('Invalid or expired code.', OTPWC_TD),
+        'loginSuccess'    => __('Login successful!', OTPWC_TD),
+        'placeholderPhone'=> __('e.g. 09123456789', OTPWC_TD),
+    ];
 
-
-    wp_localize_script('otp-verification-js', 'otpAjax', array(
-        'ajaxurl' => admin_url('admin-ajax.php'),
-        'nonce' => wp_create_nonce('otp_verification_nonce'),
-        'editAddressUrl' => wc_get_account_endpoint_url('edit-address') 
-    ));
+    wp_localize_script('otp-verification-js', 'otpAjax', [
+        'ajaxurl'        => admin_url('admin-ajax.php'),
+        'nonce'          => wp_create_nonce('otp_verification_nonce'),
+        'editAddressUrl' => wc_get_account_endpoint_url('dashboard'),
+        'is_rtl'         => is_rtl(),
+        'i18n'           => $i18n,
+    ]);
 }
 add_action('wp_enqueue_scripts', 'otp_verification_enqueue_assets');
 
 
 
 
+
 function otp_verification_shortcode() {
-    ob_start(); ?>
+    ob_start();
+    $dir = is_rtl() ? 'rtl' : 'ltr'; ?>
     
-    <!-- دکمه ورود/ثبت‌نام -->
     <div class="text-center my-4">
-        <button type="button" class="btn btn-primary btn-lg rounded-pill shadow" data-bs-toggle="modal" data-bs-target="#otpModal">
-            ورود / ثبت‌نام
+        <button type="button"
+                class="btn btn-primary btn-lg rounded-pill shadow"
+                data-bs-toggle="modal"
+                data-bs-target="#otpModal">
+            <?php echo esc_html__('Login / Sign up', OTPWC_TD); ?>
         </button>
     </div>
+    <div id="otpLoader" class="text-center my-3" style="display:none;">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">لطفاً صبر کنید...</span>
+        </div>
+        <p class="mt-2">لطفاً صبر کنید...</p>
+    </div>
 
-    <!-- مودال OTP -->
-    <div class="modal fade" id="otpModal" tabindex="-1" aria-hidden="true">
+
+    <div class="modal fade" id="otpModal" tabindex="-1" aria-hidden="true" dir="<?php echo esc_attr($dir); ?>">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content rounded-4 shadow-lg">
                 <div class="modal-header border-0">
-                    <h5 class="modal-title fw-bold">📱 ورود یا ثبت‌نام</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="بستن"></button>
+                    <h5 class="modal-title fw-bold"><?php echo esc_html__('Login or Sign up', OTPWC_TD); ?> 📱</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php esc_attr_e('Close', OTPWC_TD); ?>"></button>
                 </div>
                 <div class="modal-body">
-
-                    <!-- مرحله ۱: دریافت شماره -->
                     <div id="stepPhone">
-                        <p class="text-muted">شماره موبایل خود را وارد کنید:</p>
-                        <input type="text" id="phone" class="form-control rounded-pill mb-3" placeholder="مثال: 09123456789">
-                        <button id="sendCodeBtn" class="btn btn-primary w-100 rounded-pill">ارسال کد تأیید</button>
+                        <p class="text-muted mb-2"><?php echo esc_html__('Enter your mobile number:', OTPWC_TD); ?></p>
+                        <input type="tel" id="phone" class="form-control rounded-pill mb-3"
+                               placeholder="<?php echo esc_attr__('e.g. 09123456789', OTPWC_TD); ?>"
+                               inputmode="numeric" autocomplete="tel">
+                        <button id="sendCodeBtn" class="btn btn-primary w-100 rounded-pill">
+                            <?php echo esc_html__('Send verification code', OTPWC_TD); ?>
+                        </button>
                     </div>
 
-                    <!-- مرحله ۲: وارد کردن کد -->
                     <div id="stepCode" style="display:none;">
-                        <p class="text-muted">کدی که به <span id="showPhone"></span> ارسال شد را وارد کنید:</p>
+                        <p class="text-muted">
+                            <?php echo esc_html__('Enter the code sent to', OTPWC_TD); ?>
+                            <span id="showPhone" class="fw-bold"></span>
+                        </p>
+
                         <div class="d-flex justify-content-center gap-2 mb-3 otp-inputs">
                             <?php for ($i=1; $i<=6; $i++): ?>
-                                <input type="text" maxlength="1" class="form-control text-center fs-4 otp-field" style="width:45px;">
+                                <input type="text" maxlength="1"
+                                       class="form-control text-center fs-4 otp-field" style="width:45px;"
+                                       inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code">
                             <?php endfor; ?>
                         </div>
-                        <!-- پیام خطا -->
-<div id="otpError" class="text-danger text-center mb-2" style="display:none;"></div>
-                        <button id="verifyBtn" class="btn btn-success w-100 rounded-pill">تأیید و ورود</button>
+
+                        <div id="otpError" class="text-danger text-center mb-2" style="display:none;"></div>
+
+                        <button id="verifyBtn" class="btn btn-success w-100 rounded-pill">
+                            <?php echo esc_html__('Confirm & Login', OTPWC_TD); ?>
+                        </button>
 
                         <div class="mt-3 text-center">
-                            <small class="text-muted">کد نرسیده؟</small><br>
-                            <button type="button" id="resendCode" class="btn btn-link p-0" disabled>ارسال مجدد (<span id="timer">120</span> ثانیه)</button>
+                            <small class="text-muted"><?php echo esc_html__('Didn’t receive the code?', OTPWC_TD); ?></small><br>
+                            <button type="button" id="resendCode" class="btn btn-link p-0" disabled>
+                                <?php echo esc_html__('Resend', OTPWC_TD); ?> (<span id="timer">120</span> <?php echo esc_html__('seconds', OTPWC_TD); ?>)
+                            </button>
                         </div>
                     </div>
 
@@ -129,60 +177,20 @@ function otp_verification_shortcode() {
     </div>
 
     <style>
-        .otp-inputs .otp-field {
-            border-radius: 12px;
-            height: 55px;
-            font-weight: bold;
+        /* مودال با صفحه RTL/LTR سازگار است، اما کادرهای OTP همیشه LTR پر می‌شوند */
+        .otp-inputs{direction:ltr; display:flex; justify-content:center; gap:10px;}
+        .otp-field{
+            width:50px;height:60px;font-size:24px;text-align:center;
+            direction:ltr; unicode-bidi:plaintext;
+            border:2px solid #ddd;border-radius:12px;font-weight:bold;transition:.2s;
         }
-        .otp-inputs .otp-field:focus {
-            border: 2px solid #0d6efd;
-            box-shadow: 0 0 6px rgba(13,110,253,0.4);
-        }
-        .otp-field {
-    width: 50px;
-    height: 60px;
-    font-size: 24px;
-    text-align: center;
-    direction: ltr;   /* 👈 اجباری چپ به راست */
-    unicode-bidi: plaintext; /* 👈 جلوگيری از قاطی شدن با RTL */
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    font-weight: bold;
-    transition: all 0.2s ease;
-}
-.otp-field:focus {
-    border-color: #28a745;
-    box-shadow: 0 0 6px rgba(40,167,69,0.4);
-    outline: none;
-}
-.otp-inputs {
-    direction: ltr;   /* 👈 همیشه چپ به راست */
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-}
-
-.otp-field {
-    width: 50px;
-    height: 60px;
-    font-size: 24px;
-    text-align: center;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    font-weight: bold;
-    transition: all 0.2s ease;
-}
-.otp-field:focus {
-    border-color: #28a745;
-    box-shadow: 0 0 6px rgba(40,167,69,0.4);
-    outline: none;
-}
-
+        .otp-field:focus{border-color:#28a745; box-shadow:0 0 6px rgba(40,167,69,.4); outline:0;}
     </style>
-
-    <?php return ob_get_clean();
+    <?php
+    return ob_get_clean();
 }
 add_shortcode('otp_verification', 'otp_verification_shortcode');
+
 
 
 
@@ -194,6 +202,8 @@ function otp_generate_code() {
     $table_name = $wpdb->prefix . 'verification_codes';
 
     $phone = sanitize_text_field($_POST['phone']);
+
+    $phone = preg_replace('/^\+98/', '0', $phone);
 
     $code = sprintf("%06d", rand(0, 999999));
 
@@ -208,12 +218,11 @@ function otp_generate_code() {
     ));
     
     if ($inserted) {
-        $message = "کد تایید شما: $code";
+        $message = sprintf(__('Your verification code: %s', OTPWC_TD), $code);
         voiceweb_send_sms($message, $phone);
-
-        wp_send_json_success(array('message' => 'کد تأیید ارسال شد!'));
+        wp_send_json_success(['message' => __('Verification code sent!', OTPWC_TD)]);
     } else {
-        wp_send_json_error(array('message' => 'خطا در ذخیره کد.'));
+        wp_send_json_error(['message' => __('Error saving code.', OTPWC_TD)]);
     }
 }
 add_action('wp_ajax_otp_generate_code', 'otp_generate_code');
@@ -226,6 +235,7 @@ function otp_verify_code() {
     $table_name = $wpdb->prefix . 'verification_codes';
 
     $phone = sanitize_text_field($_POST['phone']);
+    $phone = preg_replace('/^\+98/', '0', $phone);
     $code = sanitize_text_field($_POST['code']);
     $current_time = date('Y-m-d H:i:s');
 
@@ -272,16 +282,16 @@ function otp_verify_code() {
                 wp_set_auth_cookie($user->ID, true);
                 do_action('wp_login', $user->user_login, $user);
             } else {
-                wp_send_json_error(array('message' => 'خطا در ساخت کاربر: ' . $user_id->get_error_message()));
+              wp_send_json_error(['message' => sprintf(__('User creation failed: %s', OTPWC_TD), $user_id->get_error_message())]);
                 return;
             }
         }
 
         $wpdb->delete($table_name, array('phone_number' => $phone));
 
-        wp_send_json_success(array('message' => 'لاگین موفق!'));
+      wp_send_json_success(['message' => __('Login successful!', OTPWC_TD)]);
     } else {
-        wp_send_json_error(array('message' => 'کد نامعتبر یا منقضی شده.'));
+       wp_send_json_error(['message' => __('Invalid or expired code.', OTPWC_TD)]);
     }
 }
 add_action('wp_ajax_otp_verify_code', 'otp_verify_code');
