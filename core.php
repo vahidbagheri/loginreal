@@ -76,44 +76,116 @@ function otp_verification_enqueue_assets() {
 add_action('wp_enqueue_scripts', 'otp_verification_enqueue_assets');
 
 
+
+
 function otp_verification_shortcode() {
-    ob_start();
-    ?>
-    <div class="container mt-5">
-        <h2>ثبت‌نام/لاگین با کد تأیید</h2>
-        <form id="phoneForm">
-            <div class="mb-3">
-                <label for="phone" class="form-label">شماره تلفن:</label>
-                <input type="text" class="form-control" id="phone" name="phone" required>
-            </div>
-            <button type="submit" class="btn btn-primary">ارسال کد</button>
-        </form>
+    ob_start(); ?>
+    
+    <!-- دکمه ورود/ثبت‌نام -->
+    <div class="text-center my-4">
+        <button type="button" class="btn btn-primary btn-lg rounded-pill shadow" data-bs-toggle="modal" data-bs-target="#otpModal">
+            ورود / ثبت‌نام
+        </button>
     </div>
 
-    <div class="modal fade" id="codeModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">وارد کردن کد تأیید</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+    <!-- مودال OTP -->
+    <div class="modal fade" id="otpModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 shadow-lg">
+                <div class="modal-header border-0">
+                    <h5 class="modal-title fw-bold">📱 ورود یا ثبت‌نام</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="بستن"></button>
                 </div>
                 <div class="modal-body">
-                    <form id="codeForm">
-                        <div class="mb-3">
-                            <label for="code" class="form-label">کد تأیید:</label>
-                            <input type="text" class="form-control" id="code" name="code" required>
-                            <input type="hidden" id="modalPhone" name="phone">
+
+                    <!-- مرحله ۱: دریافت شماره -->
+                    <div id="stepPhone">
+                        <p class="text-muted">شماره موبایل خود را وارد کنید:</p>
+                        <input type="text" id="phone" class="form-control rounded-pill mb-3" placeholder="مثال: 09123456789">
+                        <button id="sendCodeBtn" class="btn btn-primary w-100 rounded-pill">ارسال کد تأیید</button>
+                    </div>
+
+                    <!-- مرحله ۲: وارد کردن کد -->
+                    <div id="stepCode" style="display:none;">
+                        <p class="text-muted">کدی که به <span id="showPhone"></span> ارسال شد را وارد کنید:</p>
+                        <div class="d-flex justify-content-center gap-2 mb-3 otp-inputs">
+                            <?php for ($i=1; $i<=6; $i++): ?>
+                                <input type="text" maxlength="1" class="form-control text-center fs-4 otp-field" style="width:45px;">
+                            <?php endfor; ?>
                         </div>
-                        <button type="submit" class="btn btn-primary">تأیید</button>
-                    </form>
+                        <!-- پیام خطا -->
+<div id="otpError" class="text-danger text-center mb-2" style="display:none;"></div>
+                        <button id="verifyBtn" class="btn btn-success w-100 rounded-pill">تأیید و ورود</button>
+
+                        <div class="mt-3 text-center">
+                            <small class="text-muted">کد نرسیده؟</small><br>
+                            <button type="button" id="resendCode" class="btn btn-link p-0" disabled>ارسال مجدد (<span id="timer">120</span> ثانیه)</button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
     </div>
-    <?php
-    return ob_get_clean();
+
+    <style>
+        .otp-inputs .otp-field {
+            border-radius: 12px;
+            height: 55px;
+            font-weight: bold;
+        }
+        .otp-inputs .otp-field:focus {
+            border: 2px solid #0d6efd;
+            box-shadow: 0 0 6px rgba(13,110,253,0.4);
+        }
+        .otp-field {
+    width: 50px;
+    height: 60px;
+    font-size: 24px;
+    text-align: center;
+    direction: ltr;   /* 👈 اجباری چپ به راست */
+    unicode-bidi: plaintext; /* 👈 جلوگيری از قاطی شدن با RTL */
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+.otp-field:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 6px rgba(40,167,69,0.4);
+    outline: none;
+}
+.otp-inputs {
+    direction: ltr;   /* 👈 همیشه چپ به راست */
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.otp-field {
+    width: 50px;
+    height: 60px;
+    font-size: 24px;
+    text-align: center;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: all 0.2s ease;
+}
+.otp-field:focus {
+    border-color: #28a745;
+    box-shadow: 0 0 6px rgba(40,167,69,0.4);
+    outline: none;
+}
+
+    </style>
+
+    <?php return ob_get_clean();
 }
 add_shortcode('otp_verification', 'otp_verification_shortcode');
+
+
+
 
 function otp_generate_code() {
     check_ajax_referer('otp_verification_nonce', 'nonce');
@@ -253,26 +325,26 @@ function voiceweb_send_sms($message, $mobile_number, $for_customer = false) {
 
 
 
-function check_wp_login_cookies() {
-    $has_logged_in = false;
-    $has_auth = false;
+// function check_wp_login_cookies() {
+//     $has_logged_in = false;
+//     $has_auth = false;
 
-    foreach ($_COOKIE as $name => $value) {
-        if (strpos($name, 'wordpress_logged_in_') === 0) {
-            $has_logged_in = true;
-        }
-        if (strpos($name, 'wordpress_sec_') === 0 || strpos($name, 'wordpress_') === 0) {
-            $has_auth = true;
-        }
-    }
+//     foreach ($_COOKIE as $name => $value) {
+//         if (strpos($name, 'wordpress_logged_in_') === 0) {
+//             $has_logged_in = true;
+//         }
+//         if (strpos($name, 'wordpress_sec_') === 0 || strpos($name, 'wordpress_') === 0) {
+//             $has_auth = true;
+//         }
+//     }
 
-    // اگر یکی بود و اون یکی نبود ⇒ حالت ناقص
-    if ( ($has_logged_in && !$has_auth) || (!$has_logged_in && $has_auth) ) {
-        wp_clear_auth_cookie(); // همه کوکی‌های سشن لاگین پاک میشه
-        wp_safe_redirect(home_url()); // ریدایرکت به صفحه اصلی
-        exit;
-    }
-}
-add_action('init', 'check_wp_login_cookies');
+//     // اگر یکی بود و اون یکی نبود ⇒ حالت ناقص
+//     if ( ($has_logged_in && !$has_auth) || (!$has_logged_in && $has_auth) ) {
+//         wp_clear_auth_cookie(); // همه کوکی‌های سشن لاگین پاک میشه
+//         wp_safe_redirect(home_url()); // ریدایرکت به صفحه اصلی
+//         exit;
+//     }
+// }
+// add_action('init', 'check_wp_login_cookies');
 
 
