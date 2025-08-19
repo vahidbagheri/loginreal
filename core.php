@@ -120,67 +120,12 @@ function otp_verification_shortcode() {
 
 
 
-    <div class="modal fade" id="otpModal" tabindex="-1" aria-hidden="true" dir="<?php echo esc_attr($dir); ?>">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 shadow-lg">
-                <div class="modal-header border-0">
-                    <h5 class="modal-title fw-bold"><?php echo esc_html__('Login or Sign up', OTPWC_TD); ?> 📱</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php esc_attr_e('Close', OTPWC_TD); ?>"></button>
-                </div>
-                <div class="modal-body">
-                    <div id="otpLoader" class="text-center my-3" style="display:none;">
-                        <div class="spinner-border text-primary" role="status">
-                            <span class="visually-hidden">لطفاً صبر کنید...</span>
-                        </div>
-                        <p class="mt-2">لطفاً صبر کنید...</p>
-                    </div>
-                    <div id="stepPhone">
-                        <p class="text-muted mb-2"><?php echo esc_html__('Enter your mobile number:', OTPWC_TD); ?></p>
-                        <input type="tel" id="phone" class="form-control rounded-pill mb-3"
-                               placeholder="<?php echo esc_attr__('e.g. 09123456789', OTPWC_TD); ?>"
-                               inputmode="numeric" autocomplete="tel">
-                        <button id="sendCodeBtn" class="btn btn-primary w-100 rounded-pill">
-                            <?php echo esc_html__('Send verification code', OTPWC_TD); ?>
-                        </button>
-                    </div>
-
-                   <div id="stepCode" style="display:none;">
-                        <p class="text-muted">
-                            <?php echo esc_html__('Enter the code sent to', OTPWC_TD); ?>
-                            <span id="showPhone" class="fw-bold"></span>
-                            <button type="button" id="editPhone" class="btn btn-link p-0 ms-2">
-                                <?php echo esc_html__('Edit number', OTPWC_TD); ?>
-                            </button>
-                        </p>
-
-                        <div class="d-flex justify-content-center gap-2 mb-3 otp-inputs">
-                            <?php for ($i=1; $i<=6; $i++): ?>
-                                <input type="text" maxlength="1"
-                                    class="form-control text-center fs-4 otp-field" style="width:45px;"
-                                    inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code">
-                            <?php endfor; ?>
-                        </div>
-
-                        <div id="otpError" class="text-danger text-center mb-2" style="display:none;"></div>
-
-                        <button id="verifyBtn" class="btn btn-success w-100 rounded-pill">
-                            <?php echo esc_html__('Confirm & Login', OTPWC_TD); ?>
-                        </button>
-
-                        <div class="mt-3 text-center">
-                            <small class="text-muted"><?php echo esc_html__('Didn’t receive the code?', OTPWC_TD); ?></small><br>
-                            <button type="button" id="resendCode" class="btn btn-link p-0" disabled>
-                                <?php echo esc_html__('Resend', OTPWC_TD); ?> (<span id="timer">120</span> <?php echo esc_html__('seconds', OTPWC_TD); ?>)
-                            </button>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-        </div>
-    </div>
+    
 
     <style>
+        .modal {
+            z-index: 1055 !important; /* اطمینان از قرارگیری مودال در بالای ناوبر */
+        }
         /* مودال با صفحه RTL/LTR سازگار است، اما کادرهای OTP همیشه LTR پر می‌شوند */
         .otp-inputs{direction:ltr; display:flex; justify-content:center; gap:10px;}
         .otp-field{
@@ -196,6 +141,103 @@ function otp_verification_shortcode() {
 add_shortcode('otp_verification', 'otp_verification_shortcode');
 
 
+
+
+add_action('wp_body_open', function() {
+    if (!is_user_logged_in()) {
+        $dir = is_rtl() ? 'rtl' : 'ltr';
+        ?>
+        <div class="modal fade" id="otpModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" dir="<?php echo esc_attr($dir); ?>">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content rounded-4 shadow-sm">
+                    <div class="modal-header border-0">
+                        <h5 class="modal-title fw-bold"><?php echo esc_html__('Login or Sign up', OTPWC_TD); ?> 📱</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php esc_attr_e('Close', OTPWC_TD); ?>"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="otpLoader" class="text-center my-3" style="display:none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">لطفاً صبر کنید...</span>
+                            </div>
+                            <p class="mt-2">لطفاً صبر کنید...</p>
+                        </div>
+                        <div id="stepPhone">
+                            <p class="text-muted mb-2"><?php echo esc_html__('Enter your mobile number:', OTPWC_TD); ?></p>
+                            <input type="tel" id="phone" class="form-control rounded-pill mb-3"
+                                   placeholder="<?php echo esc_attr__('e.g. 09123456789', OTPWC_TD); ?>"
+                                   inputmode="numeric" autocomplete="tel">
+                            <button id="sendCodeBtn" class="btn btn-primary w-100 rounded-pill">
+                                <?php echo esc_html__('Send verification code', OTPWC_TD); ?>
+                            </button>
+                        </div>
+
+                        <div id="stepCode" style="display:none;">
+                            <p class="text-muted">
+                                <?php echo esc_html__('Enter the code sent to', OTPWC_TD); ?>
+                                <span id="showPhone" class="fw-bold"></span>
+                                <button type="button" id="editPhone" class="btn btn-link p-0 ms-2">
+                                    <?php echo esc_html__('Edit number', OTPWC_TD); ?>
+                                </button>
+                            </p>
+
+                            <div class="d-flex justify-content-center gap-2 mb-3 otp-inputs">
+                                <?php for ($i=1; $i<=6; $i++): ?>
+                                    <input type="text" maxlength="1"
+                                        class="form-control text-center fs-4 otp-field" style="width:45px;"
+                                        inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code">
+                                <?php endfor; ?>
+                            </div>
+
+                            <div id="otpError" class="text-danger text-center mb-2" style="display:none;"></div>
+
+                            <button id="verifyBtn" class="btn btn-success w-100 rounded-pill">
+                                <?php echo esc_html__('Confirm & Login', OTPWC_TD); ?>
+                            </button>
+
+                            <div class="mt-3 text-center">
+                                <small class="text-muted"><?php echo esc_html__('Didn’t receive the code?', OTPWC_TD); ?></small><br>
+                                <button type="button" id="resendCode" class="btn btn-link p-0" disabled>
+                                    <?php echo esc_html__('Resend', OTPWC_TD); ?> (<span id="timer">120</span> <?php echo esc_html__('seconds', OTPWC_TD); ?>)
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <style>
+            .modal-backdrop {
+                opacity: 0.3 !important; /* کاهش شفافیت پس‌زمینه */
+            }
+            .modal {
+                z-index: 1055 !important; /* اطمینان از قرارگیری مودال در بالای سایر عناصر */
+            }
+            .otp-inputs {
+                direction: ltr !important; /* اطمینان از LTR برای ورودی‌های OTP */
+                display: flex;
+                justify-content: center;
+                gap: 10px;
+            }
+            .otp-field {
+                width: 50px;
+                height: 60px;
+                font-size: 24px;
+                text-align: center;
+                border: 2px solid #ddd;
+                border-radius: 12px;
+                font-weight: bold;
+                transition: .2s;
+            }
+            .otp-field:focus {
+                border-color: #28a745;
+                box-shadow: 0 0 6px rgba(40,167,69,.4);
+                outline: 0;
+            }
+        </style>
+        <?php
+    }
+});
 
 
 
