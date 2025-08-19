@@ -87,8 +87,8 @@ function otp_verification_enqueue_assets() {
         'codeSent'        => __('Verification code sent!', OTPWC_TD),
         'saveError'       => __('Error saving code.', OTPWC_TD),
         'invalidCode'     => __('Invalid or expired code.', OTPWC_TD),
-        'loginSuccess'    => __('Login successful!', OTPWC_TD),
         'placeholderPhone'=> __('e.g. 09123456789', OTPWC_TD),
+        'editPhone'       => __('Edit number', OTPWC_TD), // اضافه شده
     ];
 
     wp_localize_script('otp-verification-js', 'otpAjax', [
@@ -117,12 +117,7 @@ function otp_verification_shortcode() {
             <?php echo esc_html__('Login / Sign up', OTPWC_TD); ?>
         </button>
     </div>
-    <div id="otpLoader" class="text-center my-3" style="display:none;">
-        <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">لطفاً صبر کنید...</span>
-        </div>
-        <p class="mt-2">لطفاً صبر کنید...</p>
-    </div>
+
 
 
     <div class="modal fade" id="otpModal" tabindex="-1" aria-hidden="true" dir="<?php echo esc_attr($dir); ?>">
@@ -133,6 +128,12 @@ function otp_verification_shortcode() {
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="<?php esc_attr_e('Close', OTPWC_TD); ?>"></button>
                 </div>
                 <div class="modal-body">
+                    <div id="otpLoader" class="text-center my-3" style="display:none;">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">لطفاً صبر کنید...</span>
+                        </div>
+                        <p class="mt-2">لطفاً صبر کنید...</p>
+                    </div>
                     <div id="stepPhone">
                         <p class="text-muted mb-2"><?php echo esc_html__('Enter your mobile number:', OTPWC_TD); ?></p>
                         <input type="tel" id="phone" class="form-control rounded-pill mb-3"
@@ -143,17 +144,20 @@ function otp_verification_shortcode() {
                         </button>
                     </div>
 
-                    <div id="stepCode" style="display:none;">
+                   <div id="stepCode" style="display:none;">
                         <p class="text-muted">
                             <?php echo esc_html__('Enter the code sent to', OTPWC_TD); ?>
                             <span id="showPhone" class="fw-bold"></span>
+                            <button type="button" id="editPhone" class="btn btn-link p-0 ms-2">
+                                <?php echo esc_html__('Edit number', OTPWC_TD); ?>
+                            </button>
                         </p>
 
                         <div class="d-flex justify-content-center gap-2 mb-3 otp-inputs">
                             <?php for ($i=1; $i<=6; $i++): ?>
                                 <input type="text" maxlength="1"
-                                       class="form-control text-center fs-4 otp-field" style="width:45px;"
-                                       inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code">
+                                    class="form-control text-center fs-4 otp-field" style="width:45px;"
+                                    inputmode="numeric" pattern="[0-9]*" autocomplete="one-time-code">
                             <?php endfor; ?>
                         </div>
 
