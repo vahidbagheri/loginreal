@@ -404,3 +404,4 @@ function voiceweb_send_sms($message, $mobile_number, $for_customer = false) {
 // add_action('init', 'check_wp_login_cookies');
 
 
+//   if(!is_user_logged_in()){echo do_shortcode('[otp_verification]');} 
